@@ -14661,6 +14661,8 @@ with pkgs;
     go = go_1_7;
   };
 
+  kubectx = callPackage ../applications/networking/cluster/kubectx { };
+
   lame = callPackage ../development/libraries/lame { };
 
   larswm = callPackage ../applications/window-managers/larswm { };
