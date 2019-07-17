@@ -5447,6 +5447,8 @@ in {
     cudaSupport = true;
   };
 
+  testinfra = callPackage ../development/python-modules/testinfra { };
+
   tflearn = callPackage ../development/python-modules/tflearn { };
 
   simpleai = callPackage ../development/python-modules/simpleai { };
