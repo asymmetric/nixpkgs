@@ -15939,7 +15939,7 @@ in
 
   semodule-utils = callPackage ../os-specific/linux/semodule-utils { };
 
-  pi-hole = callPackage ../servers/dns/pi-hole { };
+  pi-hole = callPackage ../servers/dns/pi-hole { inherit (python2Packages) pytest testinfra; };
 
   powerdns = callPackage ../servers/dns/powerdns { libressl = libressl_2_8; };
 

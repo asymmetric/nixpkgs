@@ -1,17 +1,24 @@
-{ lib, python3Packages, fetchFromGitHub, bash }:
+{ lib
+, python2Packages
+, fetchFromGitHub
+, bash
+, pytest
+, testinfra
+}:
 
-python3Packages.buildPythonApplication rec {
+python2Packages.buildPythonApplication rec {
   pname = "pi-hole";
   version = "4.3.1";
 
   src = fetchFromGitHub {
     owner = pname;
-    repo = pname;
+    repo  = pname;
     rev = "v${version}";
     sha256 = "0pa6j835fb55bcl02v05xnbayjnw1ksibmvgkfr1apqm98xw6389";
   };
 
-  doCheck = false;
+  checkInputs = [ pytest testinfra ];
+
   postPatch = ''
     substituteInPlace pihole \
       --replace /bin/bash ${bash}/bin/bash \
