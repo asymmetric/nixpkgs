@@ -14,7 +14,9 @@ python3Packages.buildPythonApplication rec {
   doCheck = false;
   postPatch = ''
     substituteInPlace pihole \
-      --replace /bin/bash ${bash}/bin/bash
+      --replace /bin/bash ${bash}/bin/bash \
+      --replace /opt/pihole $out/opt/pihole
+
     # Is in setup_requires but not used in setup.py...
     substituteInPlace setup.py --replace "'pytest-runner'" ""
   '';
@@ -22,9 +24,14 @@ python3Packages.buildPythonApplication rec {
   installPhase = ''
     mkdir -p $out/bin
     mv pihole $out/bin/pihole
+    mkdir -p $out/opt/pihole
+    mv advanced/Scripts/* $out/opt/pihole
   '';
 
   meta = with lib; {
+    description = "A black hole for Internet advertisements";
     homepage = "https://pi-hole.org";
+    license = linceses.eupl12;
+    maintainers = [ maintainers.asymmetric ];
   };
 }
