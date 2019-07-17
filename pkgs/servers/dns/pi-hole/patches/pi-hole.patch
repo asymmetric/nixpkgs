@@ -1,0 +1,80 @@
+diff --git a/advanced/Scripts/chronometer.sh b/advanced/Scripts/chronometer.sh
+index 1a4ce99..1a4d86d 100755
+--- a/advanced/Scripts/chronometer.sh
++++ b/advanced/Scripts/chronometer.sh
+@@ -13,7 +13,7 @@ LC_NUMERIC=C
+ 
+ # Retrieve stats from FTL engine
+ pihole-FTL() {
+-    ftl_port=$(cat /var/run/pihole-FTL.port 2> /dev/null)
++    ftl_port=$(cat /run/pihole/ftl.port 2> /dev/null)
+     if [[ -n "$ftl_port" ]]; then
+         # Open connection to FTL
+         exec 3<>"/dev/tcp/127.0.0.1/$ftl_port"
+diff --git a/pihole b/pihole
+index 84a5623..0114b78 100755
+--- a/pihole
++++ b/pihole
+@@ -103,7 +103,7 @@ restartDNS() {
+   # Determine if we should reload or restart restart
+   if [[ "${svcOption}" =~ "reload" ]]; then
+     # Using SIGHUP will NOT re-read any *.conf files
+-    svc="killall -s SIGHUP ${resolver}"
++    svc="systemctl kill --signal=HUP pi-hole-ftl.service"
+   else
+     # Get PID of resolver to determine if it needs to start or restart
+     if pidof pihole-FTL &> /dev/null; then
+@@ -111,7 +111,7 @@ restartDNS() {
+     else
+       svcOption="start"
+     fi
+-    svc="service ${resolver} ${svcOption}"
++    svc="systemctl restart pi-hole-ftl.service"
+   fi
+ 
+   # Print output to Terminal, but not to Web Admin
+@@ -233,7 +233,7 @@ Options:
+     exit 0
+   elif [[ "${1}" == "off" ]]; then
+     # Disable logging
+-    sed -i 's/^log-queries/#log-queries/' /etc/dnsmasq.d/01-pihole.conf
++    sed -i 's/^log-queries/#log-queries/' /etc/pihole/dnsmasq.d/01-pihole.conf
+     sed -i 's/^QUERY_LOGGING=true/QUERY_LOGGING=false/' /etc/pihole/setupVars.conf
+     if [[ "${2}" != "noflush" ]]; then
+       # Flush logs
+@@ -243,7 +243,7 @@ Options:
+     local str="Logging has been disabled!"
+   elif [[ "${1}" == "on" ]]; then
+     # Enable logging
+-    sed -i 's/^#log-queries/log-queries/' /etc/dnsmasq.d/01-pihole.conf
++    sed -i 's/^#log-queries/log-queries/' /etc/pihole/dnsmasq.d/01-pihole.conf
+     sed -i 's/^QUERY_LOGGING=false/QUERY_LOGGING=true/' /etc/pihole/setupVars.conf
+     echo -e "  ${INFO} Enabling logging..."
+     local str="Logging has been enabled!"
+@@ -296,7 +296,7 @@ statusFunc() {
+ 
+ tailFunc() {
+   # Warn user if Pi-hole's logging is disabled
+-  local logging_enabled=$(grep -c "^log-queries" /etc/dnsmasq.d/01-pihole.conf)
++  local logging_enabled=$(grep -c "^log-queries" /etc/pihole/dnsmasq.d/01-pihole.conf)
+   if [[ "${logging_enabled}" == "0" ]]; then
+     # No "log-queries" lines are found.
+     # Commented out lines (such as "#log-queries") are ignored
+@@ -431,17 +431,6 @@ case "${1}" in
+   "-h" | "help" | "--help"      ) helpFunc;;
+ esac
+ 
+-# Must be root to use this tool
+-if [[ ! $EUID -eq 0 ]];then
+-  if [[ -x "$(command -v sudo)" ]]; then
+-    exec sudo bash "$0" "$@"
+-    exit $?
+-  else
+-    echo -e "  ${CROSS} sudo is needed to run pihole commands.  Please run this script as root or install sudo."
+-    exit 1
+-  fi
+-fi
+-
+ # Handle redirecting to specific functions based on arguments
+ case "${1}" in
+   "-w" | "whitelist"            ) listFunc "$@";;

@@ -15254,6 +15254,8 @@ in
 
   powerdns = callPackage ../servers/dns/powerdns { };
 
+  pi-hole = callPackage ../servers/dns/pi-hole { };
+
   dnsdist = callPackage ../servers/dns/dnsdist { };
 
   pdns-recursor = callPackage ../servers/dns/pdns-recursor { };
