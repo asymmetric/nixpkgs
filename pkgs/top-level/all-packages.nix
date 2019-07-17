@@ -15939,6 +15939,8 @@ in
 
   semodule-utils = callPackage ../os-specific/linux/semodule-utils { };
 
+  pi-hole = callPackage ../servers/dns/pi-hole { };
+
   powerdns = callPackage ../servers/dns/powerdns { libressl = libressl_2_8; };
 
   dnsdist = callPackage ../servers/dns/dnsdist { };
