@@ -15255,6 +15255,7 @@ in
   powerdns = callPackage ../servers/dns/powerdns { };
 
   pi-hole = callPackage ../servers/dns/pi-hole { };
+  pi-hole-ftl = callPackage ../servers/dns/pi-hole/ftl.nix { stdenv = gcc8Stdenv; };
 
   dnsdist = callPackage ../servers/dns/dnsdist { };
 
