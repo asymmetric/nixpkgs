@@ -15256,6 +15256,7 @@ in
 
   pi-hole = callPackage ../servers/dns/pi-hole { };
   pi-hole-ftl = callPackage ../servers/dns/pi-hole/ftl.nix { stdenv = gcc8Stdenv; };
+  pi-hole-admin = callPackage ../servers/dns/pi-hole/admin-lte.nix {};
 
   dnsdist = callPackage ../servers/dns/dnsdist { };
 
