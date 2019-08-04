@@ -1,0 +1,492 @@
+{ config, lib, pkgs, ... }:
+
+with lib;
+
+let
+  cfg = config.services.pi-hole;
+  dnsmasq-config = pkgs.writeText "dnsmasq.conf" ''
+    addn-hosts=/etc/pihole/gravity.list
+    addn-hosts=/etc/pihole/black.list
+    addn-hosts=/etc/pihole/local.list
+
+    domain-needed
+
+    localise-queries
+
+    bogus-priv
+
+    no-resolv
+
+    ${lib.strings.concatMapStringsSep "\n" (x: "server=${x}") cfg.dns}
+
+    interface=${cfg.interface}
+
+    cache-size=10000
+
+    ${optionalString (cfg.logQueries) "log-queries"}
+    log-facility=/var/log/pihole/pihole.log
+
+    local-ttl=2
+
+    log-async
+
+    # If a DHCP client claims that its name is "wpad", ignore that.
+    # This fixes a security hole. see CERT Vulnerability VU#598349
+    dhcp-name-match=set:wpad-ignore,wpad
+    dhcp-ignore-names=tag:wpad-ignore
+  '';
+
+in
+{
+  ###### interface
+  options = {
+    services.pi-hole = {
+      enable = mkEnableOption "Pi-hole";
+
+      address = {
+        ipv4 = mkOption {
+          type = types.str;
+          description = "The IPv4 address of the interface";
+          example = "192.168.130.10";
+        };
+
+        ipv6 = mkOption {
+          description = "The IPv6 address of the interface";
+          type = with types; nullOr str;
+          example = "2001:16b8:5cd7:1200:6257:18ff:fad1:d490";
+          default = null;
+        };
+      };
+
+      interface = mkOption {
+        description = "The networking interface.";
+        type = types.str;
+        example = "eth0";
+      };
+
+      dns = mkOption {
+        description = "Upstream DNS servers";
+        type = types.listOf types.str;
+        example = [
+          # Google (ECS)
+          "8.8.8.8"
+          "8.8.4.4"
+          "2001:4860:4860:0:0:0:0:8888"
+          "2001:4860:4860:0:0:0:0:8844"
+          # OpenDNS (ECS)
+          "208.67.222.222"
+          "208.67.220.220"
+          "2620:0:ccc::2"
+          "2620:0:ccd::2"
+          # Level3
+          "Level3"
+          "4.2.2.1"
+          "4.2.2.2"
+          # Comodo
+          "8.26.56.26"
+          "8.20.247.20"
+          # DNS.WATCH
+          "84.200.69.80"
+          "84.200.70.40"
+          "2001:1608:10:25:0:0:1c04:b12f"
+          "2001:1608:10:25:0:0:9249:d69b"
+          # Quad9 (filtered, DNSSEC)
+          "9.9.9.9"
+          "149.112.112.112"
+          "2620:fe::fe"
+          "2620:fe::9"
+          # Quad9 (unfiltered, no DNSSEC)
+          "9.9.9.10"
+          "149.112.112.10"
+          "2620:fe::10"
+          "2620:fe::fe:10"
+          # Quad9 (filtered + ECS)
+          "9.9.9.11"
+          "149.112.112.11"
+          "2620:fe::11"
+          # Cloudflare
+          "1.1.1.1"
+          "1.0.0.1"
+          "2606:4700:4700::1111"
+          "2606:4700:4700::1001"
+        ];
+      };
+
+      webUI = {
+        enable = mkEnableOption "the Web UI";
+        port = mkOption {
+          type = types.port;
+          default = 80;
+          example = 443;
+          description = "The port the web server should listen on.";
+        };
+      };
+
+      blocklists = mkOption {
+        description = "Blocklists to use";
+        type = types.str;
+        default = ''
+          https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts
+          https://mirror1.malwaredomains.com/files/justdomains
+          http://sysctl.org/cameleon/hosts
+          https://zeustracker.abuse.ch/blocklist.php?download=domainblocklist
+          https://s3.amazonaws.com/lists.disconnect.me/simple_tracking.txt
+          https://s3.amazonaws.com/lists.disconnect.me/simple_ad.txt
+          https://hosts-file.net/ad_servers.txt
+        '';
+      };
+
+      hostName = mkOption {
+        description = ''
+          Domain name on which Pi-hole is reachable.
+          Leave undefined if Pi-hole should only be available on localhost.
+        '';
+        type = types.str;
+        default = "localhost";
+      };
+
+      user = mkOption {
+        description = "User to run Pi-hole as";
+        type = types.str;
+        default = "pihole";
+        example = "pihole";
+      };
+
+      group = mkOption {
+        description = "Group to run Pi-hole under";
+        type = types.str;
+        default = "pihole";
+        example = "pihole";
+      };
+
+      location = mkOption {
+        description = "URL at which Pi-hole is reachable";
+        type = types.str;
+        default = "/";
+      };
+
+      logLife = mkOption {
+        description = "How long to keep logs around for";
+        type = types.str;
+        default = "90d";
+      };
+
+      forceSSL = mkOption {
+        description = "Whether SSL should be forced";
+        type = types.bool;
+        default = false;
+      };
+
+      ftl = {
+        logFile = mkOption {
+          description = "Path to the log file";
+          type = types.path;
+          default = "/var/log/pihole/ftl.log";
+          example = "/var/log/pihole/ftl.log";
+        };
+
+        pidFile = mkOption {
+          description = "Path to the file containing the daemon's PID";
+          type = types.path;
+          default = "/run/pihole/ftl.pid";
+          example = "/run/pihole/ftl.pid";
+        };
+
+        portFile = mkOption {
+          description = "Path to the file containing the port the daemon is listening on";
+          type = types.path;
+          default = "/run/pihole/ftl.port";
+          example = "/run/pihole/ftl.port";
+        };
+
+        socketFile = mkOption {
+          description = "Path to the daemon's socket";
+          type = types.path;
+          default = "/run/pihole/ftl.socket";
+          example = "/run/pihole/ftl.socket";
+        };
+
+        socketListening = mkOption {
+          description = ''
+            Whether the FTL daemon should listening for local socket connections only, or all connections.
+            Possible values are: localonly, all
+          '';
+          type = types.str;
+          default = "localonly";
+          example = "all";
+        };
+
+        queryDisplay = mkOption {
+          description = "Whether to display all queries. Possible values are: yes, no";
+          type = types.str;
+          default = "yes";
+          example = "no";
+        };
+
+        aaaaQueryAnalysis = mkOption {
+          description = "Whether to allow FTL to analyze AAAA queries from pihole.log";
+          type = types.str;
+          default = "yes";
+          example = "no";
+        };
+
+        resolveIPv4 = mkOption {
+          description = "Whether FTL should try to resolve IPv4 addresses to host names";
+          type = types.str;
+          default = "yes";
+          example = "no";
+        };
+
+        resolveIPv6 = mkOption {
+          description = "Whether FTL should try to resolve IPv6 addresses to host names";
+          type = types.str;
+          default = "yes";
+          example = "no";
+        };
+
+        maxDBDays = mkOption {
+          description = "How long to keep queries stored in the database, in days";
+          type = types.int;
+          default = 365;
+          example = 365;
+        };
+
+        dbInterval = mkOption {
+          description = "How often to store queries in the database, in minutes";
+          type = types.float;
+          default = 1.0;
+          example = 1.0;
+        };
+
+        dbFile = mkOption {
+          description = "Path to the daemon's database file";
+          type = types.path;
+          default = "/etc/pihole/pihole-FTL.db";
+          example = "/etc/pihole/pihole-FTL.db";
+        };
+
+        maxLogAge = mkOption {
+          description = "How many hours of queries to import from the database and logs";
+          type = types.float;
+          default = 24.0;
+          example = 24.0;
+        };
+
+        port = mkOption {
+          description = "The port to listen on";
+          type = types.port;
+          default = 4711;
+          example = 4711;
+        };
+
+        privacyLevel = mkOption {
+          description = ''
+            The privacy level, as documented at https://docs.pi-hole.net/ftldns/privacylevels/.
+            Valid values are: 0, 1, 2, 3
+          '';
+          type = types.int;
+          default = 0;
+          example = 3;
+        };
+
+        ignoreLocalhost = mkOption {
+          description = "Whether to ignore queries coming from localhost";
+          type = types.str;
+          default = "yes";
+          example = "no";
+        };
+
+        blockingMode = mkOption {
+          description = ''
+            How FTL should reply to blocked queries.
+            Valid values are: NULL, IP-NODATA-AAA, IP, NXDOMAIN
+          '';
+          type = types.str;
+          default = "NULL";
+          example = "NXDOMAIN";
+        };
+      };
+
+      logQueries = mkOption {
+        description = "Whether queries should be logged";
+        type = types.bool;
+        default = true;
+      };
+
+      enableACME = mkOption {
+        type = types.bool;
+        default = false;
+        description = ''
+          Whether to ask Let's Encrypt to sign a certificate for this vhost.
+        '';
+      };
+    };
+  };
+
+  ###### implementation
+    config = mkIf cfg.enable {
+      environment.etc = {
+      "pihole/setupVars.conf" = {
+        mode = "0644";
+        user = cfg.user;
+        group = cfg.group;
+        text = ''
+          IPV4_ADDRESS=${cfg.address.ipv4}
+          ${optionalString (cfg.address.ipv6 != null) "IPV6_ADDRESS=${cfg.address.ipv6}"}
+          PIHOLE_INTERFACE=${cfg.interface}
+          ${lib.strings.concatImapStringsSep "\n" (pos: x: "PIHOLE_DNS_${toString pos}=${x}") cfg.dns}
+          BLOCKING_ENABLED=true
+          QUERY_LOGGING=${toString cfg.logQueries}
+        '';
+      };
+      "pihole/pihole-FTL.conf" = {
+        mode = "0444";
+        user = cfg.user;
+        group = cfg.group;
+        text = ''
+          LOGFILE=${cfg.ftl.logFile}
+          PIDFILE=${cfg.ftl.pidFile}
+          PORTFILE=${cfg.ftl.portFile}
+          SOCKETFILE=${cfg.ftl.socketFile}
+          SOCKET_LISTENING=${cfg.ftl.socketListening}
+          QUERY_DISPLAY=${cfg.ftl.queryDisplay}
+          AAAA_QUERY_ANALYSIS=${cfg.ftl.aaaaQueryAnalysis}
+          RESOLVE_IPV4=${cfg.ftl.resolveIPv4}
+          RESOLVE_IPV6=${cfg.ftl.resolveIPv6}
+          MAXDBDAYS=${toString cfg.ftl.maxDBDays}
+          DBINTERVAL=${toString cfg.ftl.dbInterval}
+          DBFILE=${cfg.ftl.dbFile}
+          MAXLOGAGE=${toString cfg.ftl.maxLogAge}
+          FTLPORT=${toString cfg.ftl.port}
+          PRIVACYLEVEL=${toString cfg.ftl.privacyLevel}
+          IGNORE_LOCALHOST=${cfg.ftl.ignoreLocalhost}
+          BLOCKINGMODE=${cfg.ftl.blockingMode}
+        '';
+      };
+
+      "pihole/adlists.list" = {
+        mode = "0644";
+        user = cfg.user;
+        group = cfg.group;
+        text = cfg.blocklists;
+      };
+    };
+
+    environment.systemPackages = [ pkgs.pi-hole ];
+
+    systemd.services.pi-hole-ftl = {
+      description = "Pi-hole FTLDNS engine";
+
+      serviceConfig = {
+        User = cfg.user;
+        Group = cfg.group;
+        ExecStart = "${pkgs.pi-hole-ftl}/bin/pihole-FTL no-daemon -- --conf-file=${dnsmasq-config}";
+        ExecReload = "${pkgs.utillinux}/bin/kill -HUP $MAINPID";
+        Restart = "on-failure";
+        AmbientCapabilities= [ "CAP_NET_BIND_SERVICE" ];
+        RuntimeDirectory = [ "pihole" ];
+        LogsDirectory = [ "pihole" ];
+      };
+      restartTriggers = [
+        config.environment.etc."pihole/pihole-FTL.conf".source
+        config.environment.etc."pihole/setupVars.conf".source
+      ];
+    };
+
+    systemd.services.pi-hole = {
+      description = "Pi-hole";
+      wantedBy = [ "multi-user.target" ];
+      requires = [ "pi-hole-ftl.service" ];
+      after = [ "network.target" "pi-hole-ftl.service" ];
+
+      serviceConfig = {
+        User = cfg.user;
+        Group = cfg.group;
+        ExecStart = "${pkgs.pi-hole}/bin/pihole -g";
+        Type = "oneshot";
+        RemainAfterExit = "yes";
+        LogsDirectory = [ "pihole" ];
+      };
+    };
+
+    systemd.tmpfiles.rules = [
+      "d /etc/pihole 0774 pihole pihole -"
+    ];
+
+    services.nginx = {
+      enable = cfg.webUI.enable;
+      user = cfg.user;
+      group = cfg.group;
+      recommendedOptimisation = true;
+      recommendedTlsSettings = true;
+      recommendedGzipSettings = true;
+      recommendedProxySettings = true;
+      virtualHosts."${cfg.hostName}" = {
+        root = "${pkgs.pi-hole}/var/www";
+
+        locations = {
+          "= /" = {
+            extraConfig = ''
+              rewrite / /pihole/index.php;
+            '';
+          };
+          "/admin" = {
+            root = "${pkgs.pi-hole-admin}/var/www";
+            index = "index.php";
+            tryFiles = "$uri $uri/ /index.php";
+          };
+          "~ /admin.*\\.php$" = {
+            root = "${pkgs.pi-hole-admin}/var/www";
+            extraConfig = ''
+              fastcgi_pass unix:/run/phpfpm/pi-hole.sock;
+            '';
+          };
+          "~ \\.php$" = {
+            extraConfig = ''
+              fastcgi_pass unix:/run/phpfpm/pi-hole.sock;
+            '';
+          };
+        };
+        enableACME = cfg.enableACME;
+        forceSSL = cfg.forceSSL;
+      };
+    };
+
+    users = {
+      users."${cfg.user}" = {
+        isSystemUser = true;
+        group = cfg.group;
+      };
+      groups."${cfg.group}" = {};
+    };
+
+    security.polkit.extraConfig = ''
+      // Allow user pihole to manage system service pi-hole-ftl.service
+      polkit.addRule(function(action, subject) {
+          if (action.id == "org.freedesktop.systemd1.manage-units" &&
+              action.lookup("unit") == "pi-hole-ftl.service" &&
+              subject.user == "${cfg.user}") {
+                return polkit.Result.YES;
+          }
+      });
+    '';
+
+    services.phpfpm = {
+      pools.pi-hole = {
+        listen = "/run/phpfpm/pi-hole.sock";
+        extraConfig = ''
+          listen.owner = ${cfg.user}
+          listen.group = ${cfg.group}
+          user = ${cfg.user}
+          group = ${cfg.group}
+          pm = dynamic
+          pm.max_children = 10
+          pm.start_servers = 2
+          pm.min_spare_servers = 2
+          pm.max_spare_servers = 4
+          pm.max_requests = 500
+        '';
+      };
+    };
+  };
+}
