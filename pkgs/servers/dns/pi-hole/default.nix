@@ -1,9 +1,9 @@
 { lib, python3Packages, fetchFromGitHub
+, curl
 , dnsutils
 , gawk
 , gnused
 , libidn2
-, pi-hole-ftl
 , sqlite
 , systemd
 }:
@@ -51,7 +51,7 @@ python3Packages.buildPythonApplication rec {
       advanced/index.php \
       advanced/blockingpage.css
 
-    wrapProgram $out/bin/pihole --prefix PATH : "${lib.makeBinPath ([ dnsutils gawk gnused libidn2 pi-hole-ftl sqlite systemd ])}"
+    wrapProgram $out/bin/pihole --prefix PATH : "${lib.makeBinPath ([ curl dnsutils gawk gnused libidn2 sqlite systemd ])}"
   '';
 
   meta = with lib; {
