@@ -383,8 +383,8 @@ in
     systemd.services.pi-hole-ftl = {
       description = "Pi-hole FTLDNS engine";
       wantedBy = [ "multi-user.target" ];
-      wants = [ "network.target" ];
-      after = [ "network.target" ];
+      wants = [ "network-online.target" ];
+      after = [ "network-online.target" ];
 
       serviceConfig = {
         User = cfg.user;
@@ -408,8 +408,8 @@ in
 
     systemd.services.pi-hole-updater = {
       description = "Pi-hole";
-      wants = [ "network.target" ];
-      after = [ "network.target" ];
+      wants = [ "network-online.target" ];
+      after = [ "network-online.target" ];
 
       serviceConfig = {
         User = cfg.user;
