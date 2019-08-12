@@ -393,24 +393,15 @@ in
       ];
     };
 
-    systemd.services.pi-hole = {
-      description = "Pi-hole";
-      wantedBy = [ "multi-user.target" ];
-      requires = [ "pi-hole-ftl.service" ];
-      after = [ "network.target" "pi-hole-ftl.service" ];
-
-      serviceConfig = {
-        User = cfg.user;
-        Group = cfg.group;
-        ExecStart = "${pkgs.pi-hole}/bin/pihole -g";
-        Type = "oneshot";
-        RemainAfterExit = "yes";
-        LogsDirectory = [ "pihole" ];
+    systemd.timers.pi-hole = {
+      description = "Update Pi-hole adblock lists";
+      timerConfig = {
+        OnCalendar = cfg.interval;
       };
     };
 
     systemd.tmpfiles.rules = [
-      "d /etc/pihole 0774 pihole pihole -"
+      "d /etc/pihole 0774 ${cfg.user} ${cfg.group} -"
     ];
 
     services.nginx = {
