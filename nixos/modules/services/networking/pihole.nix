@@ -399,6 +399,7 @@ in
         RuntimeDirectory = [ "pihole" ];
         LogsDirectory = [ "pihole" ];
         StateDirectory = [ "pihole" ];
+        DynamicUser = true;
       };
       restartTriggers = [
         config.environment.etc."pihole/pihole-FTL.conf".source
@@ -417,6 +418,7 @@ in
         ExecStart = "${pkgs.pi-hole}/bin/pihole -g";
         LogsDirectory = [ "pihole" ];
         StateDirectory = [ "pihole" ];
+        DynamicUser = true;
       };
 
       startAt = cfg.interval;
@@ -459,14 +461,6 @@ in
         enableACME = cfg.enableACME;
         forceSSL = cfg.forceSSL;
       };
-    };
-
-    users = {
-      users."${cfg.user}" = {
-        isSystemUser = true;
-        group = cfg.group;
-      };
-      groups."${cfg.group}" = {};
     };
 
     security.polkit.extraConfig = ''
