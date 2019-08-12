@@ -313,6 +313,19 @@ in
         default = true;
       };
 
+      interval = mkOption {
+        type = types.str;
+        default = "daily";
+        example = "Mon *-*-* 00:00:00";
+        description = ''
+          Update the adblock lists at this interval.
+
+          The format is described in
+          <citerefentry><refentrytitle>systemd.time</refentrytitle>
+          <manvolnum>7</manvolnum></citerefentry>.
+        '';
+      };
+
       enableACME = mkOption {
         type = types.bool;
         default = false;
@@ -372,8 +385,6 @@ in
       };
     };
 
-    environment.systemPackages = [ pkgs.pi-hole ];
-
     systemd.services.pi-hole-ftl = {
       description = "Pi-hole FTLDNS engine";
 
@@ -393,11 +404,19 @@ in
       ];
     };
 
-    systemd.timers.pi-hole = {
-      description = "Update Pi-hole adblock lists";
-      timerConfig = {
-        OnCalendar = cfg.interval;
+    systemd.services.pi-hole-updater = {
+      description = "Pi-hole";
+      requires = [ "network.target" ];
+      after = [ "network.target" ];
+
+      serviceConfig = {
+        User = cfg.user;
+        Group = cfg.group;
+        ExecStart = "${pkgs.pi-hole}/bin/pihole -g";
+        LogsDirectory = [ "pihole" ];
       };
+
+      startAt = cfg.interval;
     };
 
     systemd.tmpfiles.rules = [
