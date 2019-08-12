@@ -4,10 +4,11 @@ with lib;
 
 let
   cfg = config.services.pi-hole;
+  stateDir = "/var/lib/pihole";
   dnsmasq-config = pkgs.writeText "dnsmasq.conf" ''
-    addn-hosts=/etc/pihole/gravity.list
-    addn-hosts=/etc/pihole/black.list
-    addn-hosts=/etc/pihole/local.list
+    addn-hosts=${stateDir}/gravity.list
+    addn-hosts=${stateDir}/black.list
+    addn-hosts=${stateDir}/local.list
 
     domain-needed
 
@@ -35,6 +36,7 @@ let
     dhcp-name-match=set:wpad-ignore,wpad
     dhcp-ignore-names=tag:wpad-ignore
   '';
+  blocklists = pkgs.writeText "adlists.list" cfg.blocklists;
 
 in
 {
@@ -261,8 +263,8 @@ in
         dbFile = mkOption {
           description = "Path to the daemon's database file";
           type = types.path;
-          default = "/etc/pihole/pihole-FTL.db";
-          example = "/etc/pihole/pihole-FTL.db";
+          default = "${stateDir}/pihole-FTL.db";
+          example = "${stateDir}/pihole-FTL.db";
         };
 
         maxLogAge = mkOption {
@@ -376,29 +378,27 @@ in
           BLOCKINGMODE=${cfg.ftl.blockingMode}
         '';
       };
-
-      "pihole/adlists.list" = {
-        mode = "0644";
-        user = cfg.user;
-        group = cfg.group;
-        text = cfg.blocklists;
-      };
     };
 
     systemd.services.pi-hole-ftl = {
       description = "Pi-hole FTLDNS engine";
-      requires = [ "network.target" ];
+      wantedBy = [ "multi-user.target" ];
+      wants = [ "network.target" ];
       after = [ "network.target" ];
 
       serviceConfig = {
         User = cfg.user;
         Group = cfg.group;
+        ExecStartPre = ''
+          ${pkgs.coreutils}/bin/install -m 0644 ${blocklists} ${stateDir}/adlists.list
+        '';
         ExecStart = "${pkgs.pi-hole-ftl}/bin/pihole-FTL no-daemon -- --conf-file=${dnsmasq-config}";
         ExecReload = "${pkgs.utillinux}/bin/kill -HUP $MAINPID";
         Restart = "on-failure";
         AmbientCapabilities= [ "CAP_NET_BIND_SERVICE" ];
         RuntimeDirectory = [ "pihole" ];
         LogsDirectory = [ "pihole" ];
+        StateDirectory = [ "pihole" ];
       };
       restartTriggers = [
         config.environment.etc."pihole/pihole-FTL.conf".source
@@ -416,14 +416,11 @@ in
         Group = cfg.group;
         ExecStart = "${pkgs.pi-hole}/bin/pihole -g";
         LogsDirectory = [ "pihole" ];
+        StateDirectory = [ "pihole" ];
       };
 
       startAt = cfg.interval;
     };
-
-    systemd.tmpfiles.rules = [
-      "d /etc/pihole 0774 ${cfg.user} ${cfg.group} -"
-    ];
 
     services.nginx = {
       enable = cfg.webUI.enable;
