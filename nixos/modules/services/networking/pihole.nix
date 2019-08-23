@@ -71,6 +71,12 @@ in
     services.pi-hole = {
       enable = mkEnableOption "Pi-hole service";
 
+      interface = mkOption {
+        description = "The networking interface.";
+        type = types.str;
+        example = "eth0";
+      };
+
       address = {
         ipv4 = mkOption {
           type = types.str;
@@ -84,12 +90,6 @@ in
           example = "2001:16b8:5cd7:1200:6257:18ff:fad1:d490";
           default = null;
         };
-      };
-
-      interface = mkOption {
-        description = "The networking interface.";
-        type = types.str;
-        example = "eth0";
       };
 
       nameservers = mkOption {
@@ -365,7 +365,7 @@ in
   };
 
   ###### implementation
-    config = mkIf cfg.enable {
+  config = mkIf cfg.enable {
 
     systemd.services.pi-hole-ftl = {
       description = "Pi-hole FTLDNS engine";
