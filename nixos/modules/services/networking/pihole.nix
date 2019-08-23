@@ -389,6 +389,12 @@ in
       };
     };
 
+    systemd.tmpfiles.rules = [
+      "L+ /etc/pihole/dnsmasq.conf - - - - ${dnsmasqConfig}"
+      "L+ /etc/pihole/setupVars.conf - - - - ${setupVars}"
+      "L+ /etc/pihole/pihole-FTL.conf - - - - ${ftlConf}"
+    ];
+
     systemd.services.pi-hole-updater = {
       description = "Pi-hole";
       wants = [ "network.target" ];
