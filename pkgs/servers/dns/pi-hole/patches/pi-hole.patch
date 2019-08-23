@@ -1,5 +1,5 @@
 diff --git a/advanced/Scripts/chronometer.sh b/advanced/Scripts/chronometer.sh
-index 1a4ce99..ce9092f 100755
+index 1a4ce99..7b14109 100755
 --- a/advanced/Scripts/chronometer.sh
 +++ b/advanced/Scripts/chronometer.sh
 @@ -13,7 +13,7 @@ LC_NUMERIC=C
@@ -7,131 +7,55 @@ index 1a4ce99..ce9092f 100755
  # Retrieve stats from FTL engine
  pihole-FTL() {
 -    ftl_port=$(cat /var/run/pihole-FTL.port 2> /dev/null)
-+    ftl_port=$(cat /run/pihole/ftl.port 2> /dev/null)
++    ftl_port=$(cat /var/run/pihole/ftl.port 2> /dev/null)
      if [[ -n "$ftl_port" ]]; then
          # Open connection to FTL
          exec 3<>"/dev/tcp/127.0.0.1/$ftl_port"
-@@ -208,8 +208,8 @@ get_init_stats() {
-     fi
- 
-     # Test existence of setupVars config
--    if [[ -f "/etc/pihole/setupVars.conf" ]]; then
--        setupVars="/etc/pihole/setupVars.conf"
-+    if [[ -f "/var/lib/pihole/setupVars.conf" ]]; then
-+        setupVars="/var/lib/pihole/setupVars.conf"
-     fi
- }
- 
-diff --git a/advanced/Scripts/version.sh b/advanced/Scripts/version.sh
-index f6d4d34..39b1564 100755
---- a/advanced/Scripts/version.sh
-+++ b/advanced/Scripts/version.sh
-@@ -138,7 +138,7 @@ errorOutput() {
- defaultOutput() {
-     # Source the setupvars config file
-     # shellcheck disable=SC1091
--    source /etc/pihole/setupVars.conf
-+    source /var/lib/pihole/setupVars.conf
- 
-     versionOutput "pi-hole" "$@"
- 
-diff --git a/advanced/Scripts/webpage.sh b/advanced/Scripts/webpage.sh
-index c8dfb12..5c017a4 100755
---- a/advanced/Scripts/webpage.sh
-+++ b/advanced/Scripts/webpage.sh
-@@ -10,7 +10,7 @@
- # This file is copyright under the latest version of the EUPL.
- # Please see LICENSE file for your rights under this license.
- 
--readonly setupVars="/etc/pihole/setupVars.conf"
-+readonly setupVars="/var/lib/pihole/setupVars.conf"
- readonly dnsmasqconfig="/etc/dnsmasq.d/01-pihole.conf"
- readonly dhcpconfig="/etc/dnsmasq.d/02-pihole-dhcp.conf"
- readonly FTLconf="/etc/pihole/pihole-FTL.conf"
-diff --git a/advanced/index.php b/advanced/index.php
-index 78135e1..d86ca12 100644
---- a/advanced/index.php
-+++ b/advanced/index.php
-@@ -11,8 +11,8 @@ $serverName = htmlspecialchars($_SERVER["HTTP_HOST"]);
- // Remove external ipv6 brackets if any
- $serverName = preg_replace('/^\[(.*)\]$/', '${1}', $serverName);
- 
--if (!is_file("/etc/pihole/setupVars.conf"))
--  die("[ERROR] File not found: <code>/etc/pihole/setupVars.conf</code>");
-+if (!is_file("/var/lib/pihole/setupVars.conf"))
-+  die("[ERROR] File not found: <code>/var/lib/pihole/setupVars.conf</code>");
- 
- // Get values from setupVars.conf
- $setupVars = parse_ini_file("/etc/pihole/setupVars.conf");
 diff --git a/gravity.sh b/gravity.sh
-index ff0343e..13ec8c4 100755
+index ff0343e..6bd19ee 100755
 --- a/gravity.sh
 +++ b/gravity.sh
-@@ -21,7 +21,7 @@ source "${regexconverter}"
+@@ -21,7 +21,8 @@ source "${regexconverter}"
  basename="pihole"
  PIHOLE_COMMAND="/usr/local/bin/${basename}"
  
 -piholeDir="/etc/${basename}"
 +piholeDir="/var/lib/pihole"
++configDir="/etc/${basename}"
  
  adListFile="${piholeDir}/adlists.list"
  adListDefault="${piholeDir}/adlists.default"
+@@ -49,7 +50,7 @@ resolver="pihole-FTL"
+ haveSourceUrls=true
+ 
+ # Source setupVars from install script
+-setupVars="${piholeDir}/setupVars.conf"
++setupVars="${configDir}/setupVars.conf"
+ if [[ -f "${setupVars}" ]];then
+   source "${setupVars}"
+ 
+@@ -69,7 +70,7 @@ else
+ fi
+ 
+ # Source pihole-FTL from install script
+-pihole_FTL="${piholeDir}/pihole-FTL.conf"
++pihole_FTL="${configDir}/pihole-FTL.conf"
+ if [[ -f "${pihole_FTL}" ]]; then
+   source "${pihole_FTL}"
+ fi
+@@ -79,7 +80,7 @@ if [[ -z "${BLOCKINGMODE}" ]] ; then
+ fi
+ 
+ # Determine if superseded pihole.conf exists
+-if [[ -r "${piholeDir}/pihole.conf" ]]; then
++if [[ -r "${configDir}/pihole.conf" ]]; then
+   echo -e "  ${COL_LIGHT_RED}Ignoring overrides specified within pihole.conf! ${COL_NC}"
+ fi
+ 
 diff --git a/pihole b/pihole
-index 84a5623..b83d89c 100755
+index 84a5623..fcee2ae 100755
 --- a/pihole
 +++ b/pihole
-@@ -16,7 +16,7 @@ readonly blacklist="/etc/pihole/black.list"
- # setupVars is not readonly here because in some funcitons (checkout),
- # it might get set again when the installer is sourced. This causes an
- # error due to modifying a readonly variable.
--setupVars="/etc/pihole/setupVars.conf"
-+setupVars="/var/lib/pihole/setupVars.conf"
- 
- readonly colfile="${PI_HOLE_SCRIPT_DIR}/COL_TABLE"
- source "${colfile}"
-@@ -234,7 +234,7 @@ Options:
-   elif [[ "${1}" == "off" ]]; then
-     # Disable logging
-     sed -i 's/^log-queries/#log-queries/' /etc/dnsmasq.d/01-pihole.conf
--    sed -i 's/^QUERY_LOGGING=true/QUERY_LOGGING=false/' /etc/pihole/setupVars.conf
-+    sed -i 's/^QUERY_LOGGING=true/QUERY_LOGGING=false/' /var/lib/pihole/setupVars.conf
-     if [[ "${2}" != "noflush" ]]; then
-       # Flush logs
-       pihole -f
-@@ -244,7 +244,7 @@ Options:
-   elif [[ "${1}" == "on" ]]; then
-     # Enable logging
-     sed -i 's/^#log-queries/log-queries/' /etc/dnsmasq.d/01-pihole.conf
--    sed -i 's/^QUERY_LOGGING=false/QUERY_LOGGING=true/' /etc/pihole/setupVars.conf
-+    sed -i 's/^QUERY_LOGGING=false/QUERY_LOGGING=true/' /var/lib/pihole/setupVars.conf
-     echo -e "  ${INFO} Enabling logging..."
-     local str="Logging has been enabled!"
-   else
-@@ -271,13 +271,13 @@ statusFunc() {
-   fi
- 
-   # Determine if Pi-hole's blocking is enabled
--  if grep -q "BLOCKING_ENABLED=false" /etc/pihole/setupVars.conf; then
-+  if grep -q "BLOCKING_ENABLED=false" ${setupVars}; then
-     # A config is commented out
-     case "${1}" in
-       "web") echo 0;;
-       *) echo -e "  ${CROSS} Pi-hole blocking is Disabled";;
-     esac
--  elif grep -q "BLOCKING_ENABLED=true" /etc/pihole/setupVars.conf;  then
-+  elif grep -q "BLOCKING_ENABLED=true" ${setupVars};  then
-     # Configs are set
-     case "${1}" in
-       "web") echo 1;;
-@@ -305,7 +305,7 @@ tailFunc() {
-   echo -e "  ${INFO} Press Ctrl-C to exit"
- 
-   # Retrieve IPv4/6 addresses
--  source /etc/pihole/setupVars.conf
-+  source /var/lib/pihole/setupVars.conf
- 
-   # Strip date from each line
-   # Colour blocklist/blacklist/wildcard entries as red
 @@ -431,17 +431,6 @@ case "${1}" in
    "-h" | "help" | "--help"      ) helpFunc;;
  esac
