@@ -43,25 +43,29 @@ let
     BLOCKING_ENABLED=true
     QUERY_LOGGING=${toString cfg.logQueries}
   '';
-  ftlConf = pkgs.writeText "pihole-FTL.conf" ''
-    LOGFILE=${cfg.ftl.logFile}
-    PIDFILE=${cfg.ftl.pidFile}
-    PORTFILE=${cfg.ftl.portFile}
-    SOCKETFILE=${cfg.ftl.socketFile}
-    SOCKET_LISTENING=${cfg.ftl.socketListening}
-    QUERY_DISPLAY=${cfg.ftl.queryDisplay}
-    AAAA_QUERY_ANALYSIS=${cfg.ftl.aaaaQueryAnalysis}
-    RESOLVE_IPV4=${cfg.ftl.resolveIPv4}
-    RESOLVE_IPV6=${cfg.ftl.resolveIPv6}
-    MAXDBDAYS=${toString cfg.ftl.maxDBDays}
-    DBINTERVAL=${toString cfg.ftl.dbInterval}
-    DBFILE=${cfg.ftl.dbFile}
-    MAXLOGAGE=${toString cfg.ftl.maxLogAge}
-    FTLPORT=${toString cfg.ftl.port}
-    PRIVACYLEVEL=${toString cfg.ftl.privacyLevel}
-    IGNORE_LOCALHOST=${cfg.ftl.ignoreLocalhost}
-    BLOCKINGMODE=${cfg.ftl.blockingMode}
-  '';
+  ftlConf =
+    let
+      yesNo = yes: if yes then "yes" else "no";
+    in
+      pkgs.writeText "pihole-FTL.conf" ''
+        LOGFILE=${cfg.ftl.logFile}
+        PIDFILE=${cfg.ftl.pidFile}
+        PORTFILE=${cfg.ftl.portFile}
+        SOCKETFILE=${cfg.ftl.socketFile}
+        SOCKET_LISTENING=${cfg.ftl.socketListening}
+        QUERY_DISPLAY=${yesNo cfg.ftl.queryDisplay}
+        AAAA_QUERY_ANALYSIS=${yesNo cfg.ftl.aaaaQueryAnalysis}
+        RESOLVE_IPV4=${yesNo cfg.ftl.resolveIPv4}
+        RESOLVE_IPV6=${yesNo cfg.ftl.resolveIPv6}
+        MAXDBDAYS=${toString cfg.ftl.maxDBDays}
+        DBINTERVAL=${toString cfg.ftl.dbInterval}
+        DBFILE=${cfg.ftl.dbFile}
+        MAXLOGAGE=${toString cfg.ftl.maxLogAge}
+        FTLPORT=${toString cfg.ftl.port}
+        PRIVACYLEVEL=${toString cfg.ftl.privacyLevel}
+        IGNORE_LOCALHOST=${yesNo cfg.ftl.ignoreLocalhost}
+        BLOCKINGMODE=${cfg.ftl.blockingMode}
+      '';
   blocklists = pkgs.writeText "adlist.list" cfg.blocklists;
 
 in
@@ -141,13 +145,31 @@ in
       };
 
       webUI = {
-        enable = mkEnableOption "the Web UI";
+        enable = mkOption {
+          type = types.bool;
+          default = false;
+          description = ''
+            Whether to enable the web UI, served by nginx.
+
+            Further nginx configuration can be declared by adapting <literal>services.nginx.virtualHosts.&lt;name&gt;</literal>.
+
+            See <xref linkend="opt-services.nginx.virtualHosts"/> for further information.
+          '';
+        };
+
         port = mkOption {
           type = types.port;
           default = 80;
           example = 443;
           description = "The port the web server should listen on.";
         };
+
+        hostName = mkOption {
+          description = "Hostname for the vhost.";
+          type = types.str;
+          default = "localhost";
+        };
+
       };
 
       blocklists = mkOption {
@@ -162,14 +184,6 @@ in
           https://s3.amazonaws.com/lists.disconnect.me/simple_ad.txt
           https://hosts-file.net/ad_servers.txt
         '';
-      };
-
-      hostName = mkOption {
-        description = ''
-          Domain name on which Pi-hole is reachable.
-        '';
-        type = types.str;
-        default = "localhost";
       };
 
       user = mkOption {
@@ -196,12 +210,6 @@ in
         description = "How long to keep logs around for";
         type = types.str;
         default = "90d";
-      };
-
-      forceSSL = mkOption {
-        description = "Whether SSL should be forced";
-        type = types.bool;
-        default = false;
       };
 
       ftl = {
@@ -245,30 +253,26 @@ in
 
         queryDisplay = mkOption {
           description = "Whether to display all queries. Possible values are: yes, no";
-          type = types.str;
-          default = "yes";
-          example = "no";
+          type = types.bool;
+          default = true;
         };
 
         aaaaQueryAnalysis = mkOption {
           description = "Whether to allow FTL to analyze AAAA queries from pihole.log";
-          type = types.str;
-          default = "yes";
-          example = "no";
+          type = types.bool;
+          default = true;
         };
 
         resolveIPv4 = mkOption {
           description = "Whether FTL should try to resolve IPv4 addresses to host names";
-          type = types.str;
-          default = "yes";
-          example = "no";
+          type = types.bool;
+          default = true;
         };
 
         resolveIPv6 = mkOption {
           description = "Whether FTL should try to resolve IPv6 addresses to host names";
-          type = types.str;
-          default = "yes";
-          example = "no";
+          type = types.bool;
+          default = true;
         };
 
         maxDBDays = mkOption {
@@ -318,9 +322,8 @@ in
 
         ignoreLocalhost = mkOption {
           description = "Whether to ignore queries coming from localhost";
-          type = types.str;
-          default = "yes";
-          example = "no";
+          type = types.bool;
+          default = true;
         };
 
         blockingMode = mkOption {
@@ -350,14 +353,6 @@ in
           The format is described in
           <citerefentry><refentrytitle>systemd.time</refentrytitle>
           <manvolnum>7</manvolnum></citerefentry>.
-        '';
-      };
-
-      enableACME = mkOption {
-        type = types.bool;
-        default = false;
-        description = ''
-          Whether to ask Let's Encrypt to sign a certificate for this vhost.
         '';
       };
     };
@@ -419,7 +414,7 @@ in
       recommendedTlsSettings = true;
       recommendedGzipSettings = true;
       recommendedProxySettings = true;
-      virtualHosts."${cfg.hostName}" = {
+      virtualHosts."${cfg.webUI.hostName}" = {
         root = "${pkgs.pi-hole}/var/www";
 
         locations = {
@@ -445,8 +440,6 @@ in
             '';
           };
         };
-        enableACME = cfg.enableACME;
-        forceSSL = cfg.forceSSL;
       };
     };
 
