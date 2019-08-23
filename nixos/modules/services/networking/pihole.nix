@@ -17,7 +17,7 @@ let
 
     no-resolv
 
-    ${lib.strings.concatMapStringsSep "\n" (x: "server=${x}") cfg.dns}
+    ${lib.strings.concatMapStringsSep "\n" (x: "server=${x}") cfg.nameservers}
 
     interface=${cfg.interface}
 
@@ -42,7 +42,7 @@ in
   ###### interface
   options = {
     services.pi-hole = {
-      enable = mkEnableOption "Pi-hole";
+      enable = mkEnableOption "Pi-hole service";
 
       address = {
         ipv4 = mkOption {
@@ -65,7 +65,7 @@ in
         example = "eth0";
       };
 
-      dns = mkOption {
+      nameservers = mkOption {
         description = "Upstream DNS servers";
         type = types.listOf types.str;
         example = [
@@ -348,7 +348,7 @@ in
           IPV4_ADDRESS=${cfg.address.ipv4}
           ${optionalString (cfg.address.ipv6 != null) "IPV6_ADDRESS=${cfg.address.ipv6}"}
           PIHOLE_INTERFACE=${cfg.interface}
-          ${lib.strings.concatImapStringsSep "\n" (pos: x: "PIHOLE_DNS_${toString pos}=${x}") cfg.dns}
+          ${lib.strings.concatImapStringsSep "\n" (pos: x: "PIHOLE_DNS_${toString pos}=${x}") cfg.nameservers}
           BLOCKING_ENABLED=true
           QUERY_LOGGING=${toString cfg.logQueries}
         '';
