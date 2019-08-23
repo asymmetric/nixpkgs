@@ -35,6 +35,33 @@ let
     dhcp-name-match=set:wpad-ignore,wpad
     dhcp-ignore-names=tag:wpad-ignore
   '';
+  setupVars = pkgs.writeText "setupVars.conf" ''
+    IPV4_ADDRESS=${cfg.address.ipv4}
+    ${optionalString (cfg.address.ipv6 != null) "IPV6_ADDRESS=${cfg.address.ipv6}"}
+    PIHOLE_INTERFACE=${cfg.interface}
+    ${lib.strings.concatImapStringsSep "\n" (pos: x: "PIHOLE_DNS_${toString pos}=${x}") cfg.nameservers}
+    BLOCKING_ENABLED=true
+    QUERY_LOGGING=${toString cfg.logQueries}
+  '';
+  ftlConf = pkgs.writeText "pihole-FTL.conf" ''
+    LOGFILE=${cfg.ftl.logFile}
+    PIDFILE=${cfg.ftl.pidFile}
+    PORTFILE=${cfg.ftl.portFile}
+    SOCKETFILE=${cfg.ftl.socketFile}
+    SOCKET_LISTENING=${cfg.ftl.socketListening}
+    QUERY_DISPLAY=${cfg.ftl.queryDisplay}
+    AAAA_QUERY_ANALYSIS=${cfg.ftl.aaaaQueryAnalysis}
+    RESOLVE_IPV4=${cfg.ftl.resolveIPv4}
+    RESOLVE_IPV6=${cfg.ftl.resolveIPv6}
+    MAXDBDAYS=${toString cfg.ftl.maxDBDays}
+    DBINTERVAL=${toString cfg.ftl.dbInterval}
+    DBFILE=${cfg.ftl.dbFile}
+    MAXLOGAGE=${toString cfg.ftl.maxLogAge}
+    FTLPORT=${toString cfg.ftl.port}
+    PRIVACYLEVEL=${toString cfg.ftl.privacyLevel}
+    IGNORE_LOCALHOST=${cfg.ftl.ignoreLocalhost}
+    BLOCKINGMODE=${cfg.ftl.blockingMode}
+  '';
   blocklists = pkgs.writeText "adlist.list" cfg.blocklists;
 
 in
@@ -339,45 +366,6 @@ in
 
   ###### implementation
     config = mkIf cfg.enable {
-      environment.etc = {
-      "pihole/setupVars.conf" = {
-        mode = "0644";
-        user = cfg.user;
-        group = cfg.group;
-        text = ''
-          IPV4_ADDRESS=${cfg.address.ipv4}
-          ${optionalString (cfg.address.ipv6 != null) "IPV6_ADDRESS=${cfg.address.ipv6}"}
-          PIHOLE_INTERFACE=${cfg.interface}
-          ${lib.strings.concatImapStringsSep "\n" (pos: x: "PIHOLE_DNS_${toString pos}=${x}") cfg.nameservers}
-          BLOCKING_ENABLED=true
-          QUERY_LOGGING=${toString cfg.logQueries}
-        '';
-      };
-      "pihole/pihole-FTL.conf" = {
-        mode = "0444";
-        user = cfg.user;
-        group = cfg.group;
-        text = ''
-          LOGFILE=${cfg.ftl.logFile}
-          PIDFILE=${cfg.ftl.pidFile}
-          PORTFILE=${cfg.ftl.portFile}
-          SOCKETFILE=${cfg.ftl.socketFile}
-          SOCKET_LISTENING=${cfg.ftl.socketListening}
-          QUERY_DISPLAY=${cfg.ftl.queryDisplay}
-          AAAA_QUERY_ANALYSIS=${cfg.ftl.aaaaQueryAnalysis}
-          RESOLVE_IPV4=${cfg.ftl.resolveIPv4}
-          RESOLVE_IPV6=${cfg.ftl.resolveIPv6}
-          MAXDBDAYS=${toString cfg.ftl.maxDBDays}
-          DBINTERVAL=${toString cfg.ftl.dbInterval}
-          DBFILE=${cfg.ftl.dbFile}
-          MAXLOGAGE=${toString cfg.ftl.maxLogAge}
-          FTLPORT=${toString cfg.ftl.port}
-          PRIVACYLEVEL=${toString cfg.ftl.privacyLevel}
-          IGNORE_LOCALHOST=${cfg.ftl.ignoreLocalhost}
-          BLOCKINGMODE=${cfg.ftl.blockingMode}
-        '';
-      };
-    };
 
     systemd.services.pi-hole-ftl = {
       description = "Pi-hole FTLDNS engine";
