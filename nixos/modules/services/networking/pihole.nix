@@ -392,6 +392,7 @@ in
       "L+ /etc/pihole/dnsmasq.conf - - - - ${dnsmasqConfig}"
       "L+ /etc/pihole/setupVars.conf - - - - ${setupVars}"
       "L+ /etc/pihole/pihole-FTL.conf - - - - ${ftlConf}"
+      "L+ /var/lib/pihole/adlist.list - - - - ${blocklists}"
     ];
 
     systemd.services.pi-hole-updater = {
