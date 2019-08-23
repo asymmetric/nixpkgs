@@ -144,6 +144,16 @@ in
         ];
       };
 
+      openFirewall = mkOption {
+        type = types.bool;
+        default = false;
+        description = ''
+          Whether to open ports in the firewall.
+
+          The webserver port will only be opened if <literal>services.pihole.webUI.enable</literal> is <literal>true</literal>.
+        '';
+      };
+
       webUI = {
         enable = mkOption {
           type = types.bool;
@@ -478,6 +488,10 @@ in
           pm.max_requests = 500
         '';
       };
+    };
+
+    networking.firewall = mkIf cfg.openFirewall {
+      allowedTCPPorts = [ 53 ] ++ optional cfg.webUI.enable cfg.webUI.port;
     };
   };
 }
