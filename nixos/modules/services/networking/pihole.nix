@@ -167,7 +167,6 @@ in
       hostName = mkOption {
         description = ''
           Domain name on which Pi-hole is reachable.
-          Leave undefined if Pi-hole should only be available on localhost.
         '';
         type = types.str;
         default = "localhost";
@@ -301,7 +300,7 @@ in
         };
 
         port = mkOption {
-          description = "The port to listen on";
+          description = "The port FTL listens on";
           type = types.port;
           default = 4711;
           example = 4711;
