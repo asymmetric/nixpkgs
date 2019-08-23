@@ -25,14 +25,12 @@ python3Packages.buildPythonApplication rec {
   postPatch = ''
     patchShebangs pihole
 
-    sed -i "s~pihole enable~$out/bin/pihole enable~" pihole
-    sed -i "s~pihole disable~$out/bin/pihole disable~" pihole
     sed -i "s~pihole -f~$out/bin/pihole -f~" pihole
     sed -i "s~/opt~$out/opt~" advanced/Scripts/*.sh pihole gravity.sh
     sed -i "s~/usr/local/bin/~$out/bin/~" gravity.sh advanced/Scripts/*.sh
     sed -i "s~/etc/dnsmasq.d~/etc/pihole/dnsmasq.d~" advanced/Scripts/*.sh
 
-    # Is in setup_requires but not used in setup.py...
+    # No usable tests
     substituteInPlace setup.py --replace "'pytest-runner'" ""
   '';
 
