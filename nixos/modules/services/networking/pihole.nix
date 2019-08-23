@@ -469,7 +469,7 @@ in
       });
     '';
 
-    services.phpfpm = {
+    services.phpfpm = lib.mkIf cfg.webUI.enable {
       pools.pi-hole = {
         listen = "/run/phpfpm/pi-hole.sock";
         extraConfig = ''
