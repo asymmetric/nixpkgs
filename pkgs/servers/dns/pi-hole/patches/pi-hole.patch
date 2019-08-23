@@ -11,55 +11,51 @@ index 1a4ce99..1a4d86d 100755
      if [[ -n "$ftl_port" ]]; then
          # Open connection to FTL
          exec 3<>"/dev/tcp/127.0.0.1/$ftl_port"
+diff --git a/gravity.sh b/gravity.sh
+index ff0343e..6bd19ee 100755
+--- a/gravity.sh
++++ b/gravity.sh
+@@ -21,7 +21,8 @@ source "${regexconverter}"
+ basename="pihole"
+ PIHOLE_COMMAND="/usr/local/bin/${basename}"
+ 
+-piholeDir="/etc/${basename}"
++piholeDir="/var/lib/pihole"
++configDir="/etc/${basename}"
+ 
+ adListFile="${piholeDir}/adlists.list"
+ adListDefault="${piholeDir}/adlists.default"
+@@ -49,7 +50,7 @@ resolver="pihole-FTL"
+ haveSourceUrls=true
+ 
+ # Source setupVars from install script
+-setupVars="${piholeDir}/setupVars.conf"
++setupVars="${configDir}/setupVars.conf"
+ if [[ -f "${setupVars}" ]];then
+   source "${setupVars}"
+ 
+@@ -69,7 +70,7 @@ else
+ fi
+ 
+ # Source pihole-FTL from install script
+-pihole_FTL="${piholeDir}/pihole-FTL.conf"
++pihole_FTL="${configDir}/pihole-FTL.conf"
+ if [[ -f "${pihole_FTL}" ]]; then
+   source "${pihole_FTL}"
+ fi
+@@ -79,7 +80,7 @@ if [[ -z "${BLOCKINGMODE}" ]] ; then
+ fi
+ 
+ # Determine if superseded pihole.conf exists
+-if [[ -r "${piholeDir}/pihole.conf" ]]; then
++if [[ -r "${configDir}/pihole.conf" ]]; then
+   echo -e "  ${COL_LIGHT_RED}Ignoring overrides specified within pihole.conf! ${COL_NC}"
+ fi
+ 
 diff --git a/pihole b/pihole
-index 84a5623..0114b78 100755
+index 84a5623..fcee2ae 100755
 --- a/pihole
 +++ b/pihole
-@@ -103,7 +103,7 @@ restartDNS() {
-   # Determine if we should reload or restart restart
-   if [[ "${svcOption}" =~ "reload" ]]; then
-     # Using SIGHUP will NOT re-read any *.conf files
--    svc="killall -s SIGHUP ${resolver}"
-+    svc="systemctl kill --signal=HUP pi-hole-ftl.service"
-   else
-     # Get PID of resolver to determine if it needs to start or restart
-     if pidof pihole-FTL &> /dev/null; then
-@@ -111,7 +111,7 @@ restartDNS() {
-     else
-       svcOption="start"
-     fi
--    svc="service ${resolver} ${svcOption}"
-+    svc="systemctl restart pi-hole-ftl.service"
-   fi
- 
-   # Print output to Terminal, but not to Web Admin
-@@ -233,7 +233,7 @@ Options:
-     exit 0
-   elif [[ "${1}" == "off" ]]; then
-     # Disable logging
--    sed -i 's/^log-queries/#log-queries/' /etc/dnsmasq.d/01-pihole.conf
-+    sed -i 's/^log-queries/#log-queries/' /etc/pihole/dnsmasq.d/01-pihole.conf
-     sed -i 's/^QUERY_LOGGING=true/QUERY_LOGGING=false/' /etc/pihole/setupVars.conf
-     if [[ "${2}" != "noflush" ]]; then
-       # Flush logs
-@@ -243,7 +243,7 @@ Options:
-     local str="Logging has been disabled!"
-   elif [[ "${1}" == "on" ]]; then
-     # Enable logging
--    sed -i 's/^#log-queries/log-queries/' /etc/dnsmasq.d/01-pihole.conf
-+    sed -i 's/^#log-queries/log-queries/' /etc/pihole/dnsmasq.d/01-pihole.conf
-     sed -i 's/^QUERY_LOGGING=false/QUERY_LOGGING=true/' /etc/pihole/setupVars.conf
-     echo -e "  ${INFO} Enabling logging..."
-     local str="Logging has been enabled!"
-@@ -296,7 +296,7 @@ statusFunc() {
- 
- tailFunc() {
-   # Warn user if Pi-hole's logging is disabled
--  local logging_enabled=$(grep -c "^log-queries" /etc/dnsmasq.d/01-pihole.conf)
-+  local logging_enabled=$(grep -c "^log-queries" /etc/pihole/dnsmasq.d/01-pihole.conf)
-   if [[ "${logging_enabled}" == "0" ]]; then
-     # No "log-queries" lines are found.
-     # Commented out lines (such as "#log-queries") are ignored
 @@ -431,17 +431,6 @@ case "${1}" in
    "-h" | "help" | "--help"      ) helpFunc;;
  esac
