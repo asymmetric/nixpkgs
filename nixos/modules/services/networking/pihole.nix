@@ -387,10 +387,6 @@ in
         LogsDirectory = [ "pihole" ];
         StateDirectory = [ "pihole" ];
       };
-      restartTriggers = [
-        config.environment.etc."pihole/pihole-FTL.conf".source
-        config.environment.etc."pihole/setupVars.conf".source
-      ];
     };
 
     systemd.services.pi-hole-updater = {
