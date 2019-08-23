@@ -116,3 +116,14 @@ index 84a5623..609220a 100755
  # Handle redirecting to specific functions based on arguments
  case "${1}" in
    "-w" | "whitelist"            ) listFunc "$@";;
+diff --git a/setup.py b/setup.py
+index 0e393bc..5c2007a 100644
+--- a/setup.py
++++ b/setup.py
+@@ -1,6 +1,5 @@
+ from setuptools import setup
+ 
+ setup(
+-    setup_requires=['pytest-runner'],
+     tests_require=['pytest'],
+ )
