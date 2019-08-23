@@ -55,6 +55,7 @@ let
         SOCKET_LISTENING=${cfg.ftl.socketListening}
         QUERY_DISPLAY=${yesNo cfg.ftl.queryDisplay}
         AAAA_QUERY_ANALYSIS=${yesNo cfg.ftl.aaaaQueryAnalysis}
+        ANALYZE_ONLY_A_AND_AAAA=${yesNo cfg.ftl.analyzeOnlyAAndAAAA}
         RESOLVE_IPV4=${yesNo cfg.ftl.resolveIPv4}
         RESOLVE_IPV6=${yesNo cfg.ftl.resolveIPv6}
         MAXDBDAYS=${toString cfg.ftl.maxDBDays}
@@ -254,7 +255,7 @@ in
         socketListening = mkOption {
           description = ''
             Whether the FTL daemon should listening for local socket connections only, or all connections.
-            Possible values are: localonly, all
+            Valid values are: <literal>localonly</literal>, <literal>all</literal>.
           '';
           type = types.str;
           default = "localonly";
@@ -262,7 +263,7 @@ in
         };
 
         queryDisplay = mkOption {
-          description = "Whether to display all queries. Possible values are: yes, no";
+          description = "Whether to display all queries.";
           type = types.bool;
           default = true;
         };
@@ -273,27 +274,33 @@ in
           default = true;
         };
 
+        analyzeOnlyAAndAAAA = mkOption {
+          description = "Whether FTL should only analyze A and AAAA queries.";
+          type = types.bool;
+          default = false;
+        };
+
         resolveIPv4 = mkOption {
-          description = "Whether FTL should try to resolve IPv4 addresses to host names";
+          description = "Whether FTL should try to resolve IPv4 addresses to host names.";
           type = types.bool;
           default = true;
         };
 
         resolveIPv6 = mkOption {
-          description = "Whether FTL should try to resolve IPv6 addresses to host names";
+          description = "Whether FTL should try to resolve IPv6 addresses to host names.";
           type = types.bool;
           default = true;
         };
 
         maxDBDays = mkOption {
-          description = "How long to keep queries stored in the database, in days";
+          description = "How long to keep queries stored in the database, in days.";
           type = types.int;
           default = 365;
           example = 365;
         };
 
         dbInterval = mkOption {
-          description = "How often to store queries in the database, in minutes";
+          description = "How often to store queries in the database, in minutes.";
           type = types.float;
           default = 1.0;
           example = 1.0;
@@ -314,7 +321,7 @@ in
         };
 
         port = mkOption {
-          description = "The port FTL listens on";
+          description = "The port FTL should listen on.";
           type = types.port;
           default = 4711;
           example = 4711;
@@ -323,7 +330,8 @@ in
         privacyLevel = mkOption {
           description = ''
             The privacy level, as documented at https://docs.pi-hole.net/ftldns/privacylevels/.
-            Valid values are: 0, 1, 2, 3
+
+            Valid values are: 0, 1, 2, 3.
           '';
           type = types.int;
           default = 0;
@@ -333,13 +341,14 @@ in
         ignoreLocalhost = mkOption {
           description = "Whether to ignore queries coming from localhost";
           type = types.bool;
-          default = true;
+          default = false;
         };
 
         blockingMode = mkOption {
           description = ''
             How FTL should reply to blocked queries.
-            Valid values are: NULL, IP-NODATA-AAA, IP, NXDOMAIN
+
+            Valid values are: <literal>NULL</literal>, <literal>IP-NODATA-AAA</literal>, <literal>IP</literal>, <literal>NXDOMAIN</literal>.
           '';
           type = types.str;
           default = "NULL";
