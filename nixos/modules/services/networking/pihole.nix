@@ -376,7 +376,7 @@ in
         User = cfg.user;
         Group = cfg.group;
         ExecStartPre = ''
-          ${pkgs.coreutils}/bin/install -m 0644 ${blocklists} /var/lib/pihole/adlist.list
+          ${pkgs.pi-hole-ftl}/bin/pihole-FTL dnsmasq-test
         '';
         ExecStart = "${pkgs.pi-hole-ftl}/bin/pihole-FTL no-daemon -- --conf-file=${dnsmasqConfig}";
         ExecReload = "${pkgs.utillinux}/bin/kill -HUP $MAINPID";
