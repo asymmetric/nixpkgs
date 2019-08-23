@@ -4,7 +4,7 @@ with lib;
 
 let
   cfg = config.services.pi-hole;
-  dnsmasq-config = pkgs.writeText "dnsmasq.conf" ''
+  dnsmasqConfig = pkgs.writeText "dnsmasq.conf" ''
     addn-hosts=/var/lib/pihole/gravity.list
     addn-hosts=/var/lib/pihole/black.list
     addn-hosts=/var/lib/pihole/local.list
@@ -379,7 +379,7 @@ in
         ExecStartPre = ''
           ${pkgs.coreutils}/bin/install -m 0644 ${blocklists} /var/lib/pihole/adlist.list
         '';
-        ExecStart = "${pkgs.pi-hole-ftl}/bin/pihole-FTL no-daemon -- --conf-file=${dnsmasq-config}";
+        ExecStart = "${pkgs.pi-hole-ftl}/bin/pihole-FTL no-daemon -- --conf-file=${dnsmasqConfig}";
         ExecReload = "${pkgs.utillinux}/bin/kill -HUP $MAINPID";
         Restart = "on-failure";
         AmbientCapabilities= [ "CAP_NET_BIND_SERVICE" ];
