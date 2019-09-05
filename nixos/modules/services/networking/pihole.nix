@@ -425,8 +425,8 @@ in
       startAt = cfg.interval;
     };
 
-    services.nginx = {
-      enable = cfg.webUI.enable;
+    services.nginx = mkIf (cfg.webUI.enable) {
+      enable = true;
       user = cfg.user;
       group = cfg.group;
       recommendedOptimisation = true;
@@ -481,7 +481,7 @@ in
       });
     '';
 
-    services.phpfpm = lib.mkIf cfg.webUI.enable {
+    services.phpfpm = mkIf cfg.webUI.enable {
       pools.pi-hole = {
         listen = "/run/phpfpm/pi-hole.sock";
         extraConfig = ''
