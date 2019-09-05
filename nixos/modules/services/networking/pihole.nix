@@ -17,7 +17,7 @@ let
 
     no-resolv
 
-    ${lib.strings.concatMapStringsSep "\n" (x: "server=${x}") cfg.nameservers}
+    ${strings.concatMapStringsSep "\n" (x: "server=${x}") cfg.nameservers}
 
     interface=${cfg.interface}
 
@@ -39,7 +39,7 @@ let
     IPV4_ADDRESS=${cfg.address.ipv4}
     ${optionalString (cfg.address.ipv6 != null) "IPV6_ADDRESS=${cfg.address.ipv6}"}
     PIHOLE_INTERFACE=${cfg.interface}
-    ${lib.strings.concatImapStringsSep "\n" (pos: x: "PIHOLE_DNS_${toString pos}=${x}") cfg.nameservers}
+    ${strings.concatImapStringsSep "\n" (pos: x: "PIHOLE_DNS_${toString pos}=${x}") cfg.nameservers}
     BLOCKING_ENABLED=true
     QUERY_LOGGING=${toString cfg.logQueries}
   '';
