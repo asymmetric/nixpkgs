@@ -67,7 +67,7 @@ let
         IGNORE_LOCALHOST=${yesNo cfg.ftl.ignoreLocalhost}
         BLOCKINGMODE=${cfg.ftl.blockingMode}
       '';
-  blocklists = pkgs.writeText "adlist.list" cfg.blocklists;
+  blocklists = pkgs.writeText "adlists.list" cfg.blocklists;
 
 in
 {
@@ -406,7 +406,7 @@ in
       "L+ /etc/pihole/dnsmasq.conf - - - - ${dnsmasqConfig}"
       "L+ /etc/pihole/setupVars.conf - - - - ${setupVars}"
       "L+ /etc/pihole/pihole-FTL.conf - - - - ${ftlConf}"
-      "L+ /var/lib/pihole/adlist.list - - - - ${blocklists}"
+      "L+ /var/lib/pihole/adlists.list - - - - ${blocklists}"
     ];
 
     systemd.services.pi-hole-updater = {
