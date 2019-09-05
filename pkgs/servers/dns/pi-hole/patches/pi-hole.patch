@@ -73,9 +73,36 @@ index bd7d093..1b4282e 100644
  
  \fB-up, updatePihole\fR [--check-only]
 diff --git a/pihole b/pihole
-index 84a5623..609220a 100755
+index 84a5623..d8b9eb9 100755
 --- a/pihole
 +++ b/pihole
+@@ -21,7 +21,7 @@ setupVars="/etc/pihole/setupVars.conf"
+ readonly colfile="${PI_HOLE_SCRIPT_DIR}/COL_TABLE"
+ source "${colfile}"
+ 
+-resolver="pihole-FTL"
++resolver="pi-hole-ftl.service"
+ 
+ webpageFunc() {
+   source "${PI_HOLE_SCRIPT_DIR}/webpage.sh"
+@@ -103,7 +103,7 @@ restartDNS() {
+   # Determine if we should reload or restart restart
+   if [[ "${svcOption}" =~ "reload" ]]; then
+     # Using SIGHUP will NOT re-read any *.conf files
+-    svc="killall -s SIGHUP ${resolver}"
++    svc="systemctl kill -s SIGHUP ${resolver}"
+   else
+     # Get PID of resolver to determine if it needs to start or restart
+     if pidof pihole-FTL &> /dev/null; then
+@@ -111,7 +111,7 @@ restartDNS() {
+     else
+       svcOption="start"
+     fi
+-    svc="service ${resolver} ${svcOption}"
++    svc="systemctl restart ${resolver}"
+   fi
+ 
+   # Print output to Terminal, but not to Web Admin
 @@ -227,9 +227,9 @@ Example: 'pihole logging on'
  Specify whether the Pi-hole log should be used
  
