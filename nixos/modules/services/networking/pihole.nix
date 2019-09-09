@@ -41,7 +41,7 @@ let
     PIHOLE_INTERFACE=${cfg.interface}
     ${strings.concatImapStringsSep "\n" (pos: x: "PIHOLE_DNS_${toString pos}=${x}") cfg.nameservers}
     BLOCKING_ENABLED=true
-    QUERY_LOGGING=${toString cfg.logQueries}
+    QUERY_LOGGING=${if cfg.logQueries then "true" else "false"}
   '';
   ftlConf =
     let
