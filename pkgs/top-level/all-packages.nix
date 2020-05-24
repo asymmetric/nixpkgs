@@ -17966,7 +17966,8 @@ in
 
 
   iosevka = callPackage ../data/fonts/iosevka {
-    nodejs = nodejs-10_x;
+    nodejs = nodejs-12_x;
+    nodePackages = nodePackages_12_x;
   };
   iosevka-bin = callPackage ../data/fonts/iosevka/bin.nix {};
 

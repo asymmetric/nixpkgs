@@ -1,6 +1,7 @@
 [
   "coffee-script"
 , "grunt-cli"
+, { "iosevka-build-deps": "../../data/fonts/iosevka" }
 , "nijs"
 , "node2nix"
 , "node-gyp"

@@ -30,13 +30,13 @@ assert (privateBuildPlan != null) -> set != null;
 stdenv.mkDerivation rec {
   pname = if set != null then "iosevka-${set}" else "iosevka";
 
-  version = "2.3.3";
+  version = "3.0.1";
 
   src = fetchFromGitHub {
     owner = "be5invis";
     repo = "Iosevka";
     rev = "v${version}";
-    sha256 = "0k7xij473g5g0lwhb6qpn70v3n2d025dww3nlb7jwbpnp03zliz0";
+    sha256 = "07w5k75v1zwnrxmp1fvp3mck99l6ch6ivaazddnhw4c408sb7zmm";
   };
 
   nativeBuildInputs = [
