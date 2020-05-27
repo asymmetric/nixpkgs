@@ -5756,6 +5756,8 @@ in
 
   orangefs = callPackage ../tools/filesystems/orangefs { };
 
+  organice = callPackage ../tools/misc/organice {};
+
   os-prober = callPackage ../tools/misc/os-prober {};
 
   osl = callPackage ../development/compilers/osl { };
