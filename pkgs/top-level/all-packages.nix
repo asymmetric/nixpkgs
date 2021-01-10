@@ -7816,6 +7816,8 @@ in
 
   tarsnapper = callPackage ../tools/backup/tarsnapper { };
 
+  prunef = callPackage ../tools/backup/prunef { };
+
   tarssh = callPackage ../servers/tarssh { };
 
   tartube = callPackage ../applications/video/tartube { };
