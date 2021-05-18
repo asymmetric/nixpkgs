@@ -1,15 +1,20 @@
-{ stdenv, lib, go, buildGoModule, fetchFromGitHub, mkYarnPackage, nixosTests
+{ stdenv
+, lib
+, go
+, buildGoModule
+, fetchFromGitHub
+, mkYarnPackage
+, nixosTests
 , fetchpatch
 }:
-
 let
-  version = "2.26.0";
+  version = "2.26.1";
 
   src = fetchFromGitHub {
     rev = "v${version}";
     owner = "prometheus";
     repo = "prometheus";
-    sha256 = "06zr10zx3f526wcxj77smcl8wk55mhlnikd0b8vbjl9yyb0qc5mz";
+    sha256 = "sha256-KpzH+ZQmL0MuozxQR/vnRYN0dTo0kYFKZLz9b8CK2NU=";
   };
 
   goPackagePath = "github.com/prometheus/prometheus";
@@ -27,11 +32,12 @@ let
     installPhase = "mv build $out";
     distPhase = "true";
   };
-in buildGoModule rec {
+in
+buildGoModule rec {
   pname = "prometheus";
   inherit src version;
 
-  vendorSha256 = "0h14pmk74lxj7z39jb4xwvx3whwkaxn9686y23sgrpkra5sk6dbm";
+  vendorSha256 = "sha256-dTUzdVF53vz0EN4gk2xXk0M++uadLJnGP7JTcma9JEA=";
 
   excludedPackages = [ "documentation/prometheus-mixin" ];
 
@@ -41,19 +47,21 @@ in buildGoModule rec {
   '';
 
   buildFlags = "-tags=builtinassets";
-  buildFlagsArray = let
-    t = "${goPackagePath}/vendor/github.com/prometheus/common/version";
-  in [
-    ''
-      -ldflags=
-         -X ${t}.Version=${version}
-         -X ${t}.Revision=unknown
-         -X ${t}.Branch=unknown
-         -X ${t}.BuildUser=nix@nixpkgs
-         -X ${t}.BuildDate=unknown
-         -X ${t}.GoVersion=${lib.getVersion go}
-    ''
-  ];
+  buildFlagsArray =
+    let
+      t = "${goPackagePath}/vendor/github.com/prometheus/common/version";
+    in
+    [
+      ''
+        -ldflags=
+           -X ${t}.Version=${version}
+           -X ${t}.Revision=unknown
+           -X ${t}.Branch=unknown
+           -X ${t}.BuildUser=nix@nixpkgs
+           -X ${t}.BuildDate=unknown
+           -X ${t}.GoVersion=${lib.getVersion go}
+      ''
+    ];
 
   # only run this in the real build, not during the vendor build
   # this should probably be fixed in buildGoModule
