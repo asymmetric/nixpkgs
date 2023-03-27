@@ -10,4 +10,5 @@
 
  <!-- The index must have a root element to declare namespaces, but we
       don't want to include it, so we select all of its children. -->
+ <xi:include href="./library/generated/index.xml" xpointer="xpointer(/root/*)" />
 </section>
