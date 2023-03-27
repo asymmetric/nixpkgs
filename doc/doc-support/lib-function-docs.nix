@@ -15,7 +15,7 @@ with pkgs; stdenv.mkDerivation {
       else
         nixdoc -c "$1" -d "lib.$1: $2" -f "$1/default.nix" > "$out/$1.section.md"
       fi
-      echo "<xi:include href='$1.xml' />" >> "$out/index.xml"
+      echo "<xi:include href='$1.section.xml' />" >> "$out/index.xml"
     }
 
     mkdir -p "$out"

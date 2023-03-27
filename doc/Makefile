@@ -102,6 +102,7 @@ functions/library/locations.xml: doc-support/result
 	ln -rfs ./doc-support/result/function-locations.xml functions/library/locations.xml
 
 functions/library/generated: $(addsuffix .xml, $(basename $(wildcard doc-support/result/function-docs/*.md)))
+	cp ./doc-support/result/function-docs/index.xml functions/library/generated/index.xml
 
 %.section.xml: %.section.md
 	$(PANDOC) $^ -t docbook \
