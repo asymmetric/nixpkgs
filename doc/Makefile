@@ -101,13 +101,19 @@ doc-support/result: doc-support/default.nix
 functions/library/locations.xml: doc-support/result
 	ln -rfs ./doc-support/result/function-locations.xml functions/library/locations.xml
 
-functions/library/generated: doc-support/result
-	ln -rfs ./doc-support/result/function-docs functions/library/generated
+functions/library/generated: $(addsuffix .xml, $(basename $(wildcard doc-support/result/function-docs/*.md)))
 
 %.section.xml: %.section.md
 	$(PANDOC) $^ -t docbook \
 		$(pandoc_flags) \
 		-o $@
+
+doc-support/result/function-docs/%.xml: doc-support/result/function-docs/%.md
+	mkdir -p functions/library/generated
+	$(PANDOC) $^ -t docbook \
+		$(pandoc_flags) \
+		-o $(addprefix functions/library/generated/, $(notdir $@))
+
 
 %.chapter.xml: %.chapter.md
 	$(PANDOC) $^ -t docbook \
