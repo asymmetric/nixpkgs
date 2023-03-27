@@ -89,7 +89,7 @@ highlightjs: doc-support/result
 	cp -r doc-support/result/highlightjs/loader.js highlightjs/
 
 
-manual-full.xml: ${MD_TARGETS} .version functions/library/locations.xml functions/index.xml *.xml **/*.xml **/**/*.xml
+manual-full.xml: ${MD_TARGETS} .version functions/library/locations.xml functions/library/generated *.xml **/*.xml **/**/*.xml
 	xmllint --nonet --xinclude --noxincludenode manual.xml --output manual-full.xml
 
 .version: doc-support/result
@@ -101,10 +101,8 @@ doc-support/result: doc-support/default.nix
 functions/library/locations.xml: doc-support/result
 	ln -rfs ./doc-support/result/function-locations.xml functions/library/locations.xml
 
-functions/index.xml: doc-support/result
-	$(PANDOC) ./doc-support/result/function-docs/index.md -s -t docbook \
-		 --toc --toc-depth=1 \
-		-o $@
+functions/library/generated: doc-support/result
+	ln -rfs ./doc-support/result/function-docs functions/library/generated
 
 %.section.xml: %.section.md
 	$(PANDOC) $^ -t docbook \
