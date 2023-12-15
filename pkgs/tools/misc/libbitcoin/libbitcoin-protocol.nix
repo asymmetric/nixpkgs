@@ -28,7 +28,7 @@ stdenv.mkDerivation rec {
     description = "Bitcoin Blockchain Query Protocol";
     homepage = "https://libbitcoin.info/";
     platforms = platforms.linux ++ platforms.darwin;
-    maintainers = with maintainers; [ asymmetric ];
+    maintainers = [ ];
 
     # AGPL with a lesser clause
     license = licenses.agpl3;
